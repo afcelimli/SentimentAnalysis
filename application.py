@@ -5,9 +5,6 @@ import os
 import json
 from analysis import sentiment_analysis, get_tweet_texts
 
-if not os.path.isfile('.secrets.yaml'):
-    raise FileExistsError('No .secrets.yaml file with the API credentials from Twitter')
-
 app = application = Flask(__name__)
 app.secret_key = 'super secret key'
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -133,8 +130,15 @@ def get_api():
 
 
 def get_auth():
-    # load credentials from secrets file to access the Twitter API
-    secrets = yaml.load(open('.secrets.yaml', 'r'))
+    secrets = {}
+    if 'TWITTER_API_KEY' in os.environ:
+        secrets['api_key'] = os.environ['TWITTER_API_KEY']
+        secrets['api_secret'] = os.environ['TWITTER_API_SECRET']
+    elif os.path.isfile('.secrets.yaml'):
+        secrets = yaml.load(open('.secrets.yaml', 'r'))
+    else:
+        raise SystemError('No .secrets.yaml file with the API credentials from Twitter')
+
     tw_auth = tweepy.OAuthHandler(secrets['api_key'], secrets['api_secret'])
     return tw_auth
 
